@@ -1,16 +1,51 @@
-# This is a sample Python script.
 
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
+# Это эхо-бот.
+# Он повторяет любые входящие текстовые сообщения.
+
+import logging
+from aiogram import Bot, Dispatcher, types
+from aiogram.dispatcher.webhook import executor  # Исправленный импорт
+
+API_TOKEN = 'BOT TOKEN HERE'
+
+# Настройка логирования
+logging.basicConfig(level=logging.INFO)
+
+# Инициализация бота и диспетчера
+bot = Bot(token=API_TOKEN)
+dp = Dispatcher(bot)
 
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+@dp.message_handler(commands=['start', 'help'])
+async def send_welcome(message: types.Message):
+    """
+    Этот хэндлер вызывается, когда пользователь отправляет команды `/start` или `/help`.
+    """
+    await message.reply("Привет!\nЯ ЭхоБот!\nРаботаю на aiogram.")
 
 
-# Press the green button in the gutter to run the script.
+@dp.message_handler(regexp='(^cat[s]?$|puss)')
+async def cats(message: types.Message):
+    """
+    Этот хэндлер отправляет изображение котов, если сообщение содержит "cat" или "puss".
+    """
+    try:
+        with open('data/cats.jpg', 'rb') as photo:
+            await bot.send_photo(
+                message.chat.id, photo, caption='Коты здесь 😺',
+                reply_to_message_id=message.message_id
+            )
+    except FileNotFoundError:
+        await message.reply("Файл с изображением котов не найден.")
+
+
+@dp.message_handler()
+async def echo(message: types.Message):
+    """
+    Этот хэндлер повторяет любое текстовое сообщение пользователя.
+    """
+    await bot.send_message(message.chat.id, message.text)
+
+
 if __name__ == '__main__':
-    print_hi('PyCharm')
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    executor.start_polling(dp, skip_updates=True)
