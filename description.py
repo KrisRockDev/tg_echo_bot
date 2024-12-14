@@ -2,13 +2,12 @@ import os
 import sys
 from icecream import ic
 
-def generate_description():
-    with open("description.md", "w") as f:
-        for root, dirs, files in os.walk("."):
-            for file in files:
-                if file.endswith(".py") or file == "description.md":
-                    file_path = os.path.join(root, file)
-                    f.write(f"{file_path}\n")
+def generate_description(lst, des_file):
+    with open(des_file, mode="w", encoding="utf-8") as f:
+        for file_path in lst:
+            with open(file_path, mode="r", encoding="utf-8") as file:
+                text = file.read()
+                f.write(f"{file_path}\n```{text}```\n\n")
 
 def get_ignor(current_directory):
     file = os.path.join(current_directory, '.gitignore')
@@ -32,15 +31,25 @@ def get_ignor(current_directory):
 def des_creator():
     current_directory = os.getcwd()
     dir_list = os.listdir(current_directory)
-    script_name = os.path.basename(sys.argv[0])
-    ignor_list = [script_name, ]
+
+    ignor_list = [
+        current_file := os.path.basename(__file__),
+        f"{current_file.split('.')[0]}.md",
+        'README.md'
+    ]
     if '.gitignore' in dir_list:
         ignor_list += get_ignor(current_directory)
     ic(ignor_list)
-    # for item in dir_list:
-    #     if ignor_list != []
-    #         if item not in i
-    #             item_path = os.path.join()
+
+    # generate_description()
+    res_list = []
+    for item in dir_list:
+        if item not in ignor_list:
+            ic(item)
+            item_path = os.path.join(current_directory, item)
+            if os.path.isfile(item_path) and item_path.endswith(".py"):
+                res_list.append(item_path)
+    ic(res_list)
 
 if __name__ == '__main__':
     des_creator()
