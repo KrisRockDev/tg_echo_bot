@@ -16,6 +16,6 @@
    ```bash
    sudo docker run \ 
    -e BOT_TOKEN=<ваш токен бота> \
-   --name tg-bot-container-1 \
+   --name my-bot-1 \
    my-bot
    ```
