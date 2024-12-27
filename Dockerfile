@@ -4,8 +4,8 @@ FROM python:3.13-slim
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     build-essential && \
-    rm -rf /var/lib/apt/lists/* \
-    
+    rm -rf /var/lib/apt/lists/*
+
 RUN pip install --upgrade pip
 
 # Устанавливаем переменную окружения для корректной работы Python
