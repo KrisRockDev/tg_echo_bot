@@ -1,5 +1,9 @@
 # Используем официальный образ Python
-FROM python:3.11-slim
+FROM python:3.13-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \ build-essential \ && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --upgrade pip
 
 # Устанавливаем переменную окружения для корректной работы Python
 ENV PYTHONDONTWRITEBYTECODE=1
