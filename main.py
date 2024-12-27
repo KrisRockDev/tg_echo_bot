@@ -1,51 +1,57 @@
-
-# Это эхо-бот.
-# Он повторяет любые входящие текстовые сообщения.
-
+import asyncio
 import logging
-from aiogram import Bot, Dispatcher, types
-from aiogram.dispatcher.webhook import executor  # Исправленный импорт
+import sys
+from os import getenv
 
-API_TOKEN = 'BOT TOKEN HERE'
+from aiogram import Bot, Dispatcher, html
+from aiogram.client.default import DefaultBotProperties
+from aiogram.enums import ParseMode
+from aiogram.filters import CommandStart
+from aiogram.types import Message
 
-# Настройка логирования
-logging.basicConfig(level=logging.INFO)
+TOKEN = getenv("BOT_TOKEN")
 
-# Инициализация бота и диспетчера
-bot = Bot(token=API_TOKEN)
-dp = Dispatcher(bot)
+# Все обработчики должны быть подключены к Router (или Dispatcher)
+
+dp = Dispatcher()
 
 
-@dp.message_handler(commands=['start', 'help'])
-async def send_welcome(message: types.Message):
+@dp.message(CommandStart())
+async def command_start_handler(message: Message) -> None:
     """
-    Этот хэндлер вызывается, когда пользователь отправляет команды `/start` или `/help`.
+    Этот обработчик получает сообщения с командой `/start`.
     """
-    await message.reply("Привет!\nЯ ЭхоБот!\nРаботаю на aiogram.")
+    # Большинство объектов события имеют алиасы для API-методов, которые можно вызывать в контексте событий.
+    # Например, чтобы ответить на входящее сообщение, можно использовать алиас `message.answer(...)`,
+    # и целевой чат будет передан в метод :ref:`aiogram.methods.send_message.SendMessage` автоматически,
+    # или вызвать API-метод напрямую через экземпляр Bot: `bot.send_message(chat_id=message.chat.id, ...)`.
+    await message.answer(f"Привет, {html.bold(message.from_user.full_name)}!")
 
 
-@dp.message_handler(regexp='(^cat[s]?$|puss)')
-async def cats(message: types.Message):
+@dp.message()
+async def echo_handler(message: Message) -> None:
     """
-    Этот хэндлер отправляет изображение котов, если сообщение содержит "cat" или "puss".
+    Обработчик отправляет обратно полученное сообщение отправителю.
+
+    По умолчанию обработчик сообщений будет обрабатывать все типы сообщений 
+    (например, текст, фото, стикеры и т.д.).
     """
     try:
-        with open('data/cats.jpg', 'rb') as photo:
-            await bot.send_photo(
-                message.chat.id, photo, caption='Коты здесь 😺',
-                reply_to_message_id=message.message_id
-            )
-    except FileNotFoundError:
-        await message.reply("Файл с изображением котов не найден.")
+        # Отправить копию полученного сообщения
+        await message.send_copy(chat_id=message.chat.id)
+    except TypeError:
+        # Но не все типы сообщений можно скопировать, поэтому это нужно обрабатывать
+        await message.answer("Хорошая попытка!")
 
 
-@dp.message_handler()
-async def echo(message: types.Message):
-    """
-    Этот хэндлер повторяет любое текстовое сообщение пользователя.
-    """
-    await bot.send_message(message.chat.id, message.text)
+async def main() -> None:
+    # Инициализация экземпляра Bot с настройками по умолчанию, которые будут применяться ко всем вызовам API
+    bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+
+    # Запуск обработки событий
+    await dp.start_polling(bot)
 
 
-if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True)
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
+    asyncio.run(main())
